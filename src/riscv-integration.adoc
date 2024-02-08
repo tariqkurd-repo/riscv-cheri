@@ -1031,8 +1031,11 @@ NOTE: `auth_cap` is <<ddc>> for {cheri_int_mode_name} and `cs1` for {cheri_cap_m
 
 ^1^ This check is architecturally required, but is impossible to encounter so may not required in an implementation.
 
+<<<<<<< HEAD
 NOTE: Indirect branches are <<JALR>>, conditional branches are <<insns-conbr-32bit>>.
 
+=======
+>>>>>>> bd7f046 (remove .cap suffix from prefetch.* and cbo.*)
 NOTE: <<CBO.ZERO>> issues as a cache block wide store.  All
 CMOs operate on the cache block which contains the address.  Prefetches check
 that the capability is tagged, not sealed, has the permission (<<r_perm>>,
