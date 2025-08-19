@@ -172,6 +172,11 @@
 :SENTRY:    YSENTRY
 :SENTRY_LC: ysentry
 
+:SCHI_BASE:      PACKY
+:SCHI_BASE_LC:   packy
+:SCHI_BASE_DESC: Pack Y register
+
+
 :LD_ST_DOT_CAP:         .Y
 :ld_st_dot_cap_lc:      .y
 
