@@ -40,6 +40,8 @@ A global capability has <<zylevels1_gl_flag>>=1.
 Local Capability::
 A local capability has <<zylevels1_gl_flag>>=0.
 
+NOTE: In the {rv64y_uni_base_name} and {rv32y_uni_base_name} capability-encoding formats the G flag is stored inverted (see the nG field), so that the reserved-zero value is global and software unaware of {cheri_levels1_ext_name} creates capabilities which are interpreted as global.
+
 Like permissions, the <<zylevels1_gl_flag>> can be cleared when creating a new capability from an existing one, but it can never be set to 1 unless derived from a superset capability which has the <<zylevels1_gl_flag>> set to 1.
 
 [#zylevels1_sl_perm,reftext="SL-permission"]
@@ -98,6 +100,153 @@ The following <<CLRPERM>> permission rules are added:
 | [[perm_req:zylevels1:sl:c-and-w,{cheri_levels1_ext_name}-2]]{cheri_levels1_ext_name}-2 +
                    | <<zylevels1_sl_perm>> | <<c_perm>> and <<w_perm>>
 |===
+
+[#zylevels1_ap_comp64]
+=== Interaction with the {rv64y_uni_base_name} Compressed AP Encoding
+
+There are 18 valid combinations of C, W, R, LM, LG and SL for each of the three valid combinations of X and ASR, giving 54 valid states in total.
+The additional legal states are below:
+
+.Compressed AP format definition - {cheri_levels1_ext_name} added states
+[#ap_comp64_table_zylg]
+[options=header,%autowidth]
+|===
+|Encoding[5:3]|Encoding[2:0]|X|ASR|R|W|C|LM|LG|SL| Comment
+11+|Octant 3
+
+|011          |100         | |   | |W|C|  |  |  |
+|011          |101         |X|   | |W|C|  |  |  |
+|011          |110         |X|ASR| |W|C|  |  |  |
+
+11+|Octant 4
+
+|100          |000         |X|   |R|W|C|  |  |  |
+|100          |001         |X|   |R|W|C|LM|  |  |
+|100          |010         |X|   |R| |C|  |  |  |
+|100          |011         |X|   |R| |C|LM|  |  |
+|100          |100         |X|   |R|W|C|  |LG|  |
+|100          |101         |X|   |R|W|C|LM|LG|  |
+|100          |110         |X|   |R|W|C|  |  |SL|
+|100          |111         |X|   |R|W|C|LM|  |SL|
+
+11+|Octant 5
+
+|101          |000         |X|ASR|R|W|C|  |  |  |
+|101          |001         |X|ASR|R|W|C|LM|  |  |
+|101          |010         |X|ASR|R| |C|  |  |  |
+|101          |011         |X|ASR|R| |C|LM|  |  |
+|101          |100         |X|ASR|R|W|C|  |LG|  |
+|101          |101         |X|ASR|R|W|C|LM|LG|  |
+|101          |110         |X|ASR|R|W|C|  |  |SL|
+|101          |111         |X|ASR|R|W|C|LM|  |SL|
+
+11+|Octant 6
+
+|110          |000         | |   |R|W|C|  |  |  |
+|110          |001         | |   |R|W|C|LM|  |  |
+|110          |010         | |   |R| |C|  |  |  |
+|110          |011         | |   |R| |C|LM|  |  |
+|110          |100         | |   |R|W|C|  |LG|  |
+|110          |101         | |   |R|W|C|LM|LG|  |
+|110          |110         | |   |R|W|C|  |  |SL|
+|110          |111         | |   |R|W|C|LM|  |SL|
+
+|===
+
+
+<<ap_comp64_table_all>> shows all the states, with LG and SL shown explicitly for the states from <<ap_comp64_table>>.
+
+.Compressed AP format definition - all states with {cheri_levels1_ext_name}
+[#ap_comp64_table_all]
+[options=header,%autowidth]
+|===
+|Encoding[5:3]|Encoding[2:0]|X|ASR|R|W|C|LM|LG|SL| Comment
+11+|Octant 0
+
+|000          |000         | |   | | | |  |  |  | NULL permissions^1^
+|000          |001         | |   |R| | |  |  |  |
+|000          |010         | |   | |W| |  |  |  |
+|000          |011         | |   |R|W| |  |  |  |
+|000          |100         | |   |R| |C|  |LG|  |
+|000          |101         | |   |R| |C|LM|LG|  |
+|000          |110         | |   |R|W|C|  |LG|SL|
+|000          |111         | |   |R|W|C|LM|LG|SL|
+
+11+|Octant 1
+
+|001          |000         |X|   | | | |  |  |  |
+|001          |001         |X|   |R| | |  |  |  |
+|001          |010         |X|   | |W| |  |  |  |
+|001          |011         |X|   |R|W| |  |  |  |
+|001          |100         |X|   |R| |C|  |LG|  |
+|001          |101         |X|   |R| |C|LM|LG|  |
+|001          |110         |X|   |R|W|C|  |LG|SL|
+|001          |111         |X|   |R|W|C|LM|LG|SL|
+
+11+|Octant 2
+
+|010          |000         |X|ASR| | | |  |  |  |
+|010          |001         |X|ASR|R| | |  |  |  |
+|010          |010         |X|ASR| |W| |  |  |  |
+|010          |011         |X|ASR|R|W| |  |  |  |
+|010          |100         |X|ASR|R| |C|  |LG|  |
+|010          |101         |X|ASR|R| |C|LM|LG|  |
+|010          |110         |X|ASR|R|W|C|  |LG|SL|
+|010          |111         |X|ASR|R|W|C|LM|LG|SL| Infinite capability
+
+11+|Octant 3
+
+|011          |000         | |   | |W|C|  |  |SL|
+|011          |001         |X|   | |W|C|  |  |SL|
+|011          |010         |X|ASR| |W|C|  |  |SL|
+|011          |011         9+|_reserved_
+|011          |100         | |   | |W|C|  |  |  |
+|011          |101         |X|   | |W|C|  |  |  |
+|011          |110         |X|ASR| |W|C|  |  |  |
+|011          |111         9+|_reserved_
+
+11+|Octant 4
+
+|100          |000         |X|   |R|W|C|  |  |  |
+|100          |001         |X|   |R|W|C|LM|  |  |
+|100          |010         |X|   |R| |C|  |  |  |
+|100          |011         |X|   |R| |C|LM|  |  |
+|100          |100         |X|   |R|W|C|  |LG|  |
+|100          |101         |X|   |R|W|C|LM|LG|  |
+|100          |110         |X|   |R|W|C|  |  |SL|
+|100          |111         |X|   |R|W|C|LM|  |SL|
+
+11+|Octant 5
+
+|101          |000         |X|ASR|R|W|C|  |  |  |
+|101          |001         |X|ASR|R|W|C|LM|  |  |
+|101          |010         |X|ASR|R| |C|  |  |  |
+|101          |011         |X|ASR|R| |C|LM|  |  |
+|101          |100         |X|ASR|R|W|C|  |LG|  |
+|101          |101         |X|ASR|R|W|C|LM|LG|  |
+|101          |110         |X|ASR|R|W|C|  |  |SL|
+|101          |111         |X|ASR|R|W|C|LM|  |SL|
+
+11+|Octant 6
+
+|110          |000         | |   |R|W|C|  |  |  |
+|110          |001         | |   |R|W|C|LM|  |  |
+|110          |010         | |   |R| |C|  |  |  |
+|110          |011         | |   |R| |C|LM|  |  |
+|110          |100         | |   |R|W|C|  |LG|  |
+|110          |101         | |   |R|W|C|LM|LG|  |
+|110          |110         | |   |R|W|C|  |  |SL|
+|110          |111         | |   |R|W|C|LM|  |SL|
+
+11+|Octant 7^1^
+
+|111          |00x, 010    9+|_reserved for {cheri_seal_ext_name}_
+|111          |011, 1x     9+|_reserved_
+
+|===
+
+^1^ The NULL encoding and octant-7 do not grant reserved-1 permissions.
+ All other allocated encodings do.
 
 === Interaction with <<LOAD_CAP>>
 

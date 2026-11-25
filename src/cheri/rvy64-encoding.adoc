@@ -21,9 +21,9 @@ The bit ranges in <<cap_encoding_xlen64_field_table>> are relative to the 64-bit
 |==============================================================================
 | Field      | Bit range | Comment
 | SDP        | 63:60     | <<SDP-field64, Software-Defined Permissions>>.
-| AP         | 52:45     | <<AP-field, Architectural Permissions>>, see <<cap_perms_encoding64>>.
+| AP         | 50:45     | <<AP-field, Architectural Permissions>>, see <<AP-field-encoding64>>.
 | P          | 44        | <<p_bit, Pointer Mode>> (<<section_cheri_hybrid_ext>> only).
-| G          | 43        | <<zylevels1_gl_flag, Global (G) flag>> (<<section_zylevels1>> only).
+| nG         | 43        | <<zylevels1_gl_flag, Global (G) flag>>, stored inverted: 0 = global, 1 = local (<<section_zylevels1>> only).
 | CT         | 27        | <<sec_cap_type, Capability Type field>>.
 | EF         | 26        | Exponent format for the <<section_cap_bounds,capability bounds>> decoding, see <<rvy64_uni_base_name_bndsenc_param_summary>>.
 | T[11:3]    | 25:17     | Top bound address field for the <<section_cap_bounds,capability bounds>> decoding, see <<rvy64_uni_base_name_bndsenc_param_summary>>.
@@ -46,7 +46,9 @@ When <<section_cheri_hybrid_ext>> is implemented:
 When <<section_zylevels1>> is implemented:
 +
 * The <<zylevels1_gl_flag>> is implemented, otherwise _reserved zero_.
-* The <<AP-field>> includes <<zylevels1_lg_perm>> and <<zylevels1_sl_perm>>, otherwise both are _reserved zero_.
+  The flag is stored inverted (the nG bit is 0 for a <<levels_globalcap>>) so that a capability created by software which is unaware of {cheri_levels1_ext_name}, with the reserved bit zero, is interpreted as global by a hart which implements {cheri_levels1_ext_name}.
+* The <<AP-field>> includes <<zylevels1_lg_perm>> and <<zylevels1_sl_perm>> using the states in <<ap_comp64_table_zylg>>, otherwise both are _reserved-1_ permissions, which are granted as described in <<AP-field-encoding64>>.
+  The <<CLRPERM>> and <<GCPERM>> bit field reports them as 1 when {cheri_levels1_ext_name} is not implemented.
 
 ==== Capability-Encoding Format Parameter Summary
 
@@ -58,8 +60,8 @@ When <<section_zylevels1>> is implemented:
 | EW          | {cap_rv64_exp_width} | Exponent width for the bounds encoding
 | CAP_MAX_E   | {cap_rv64_exp_max}   | Maximum exponent value
 | SDPLEN      | {cap_rv64_sdp_width} | Width of the <<SDP-field>>.
-| AP_MAX      | All ones             | Value of the <<AP-field>> giving maximum permissions
-| AP_ENC      | full1                | Encoding scheme for the <<AP-field>> - all combinations are representable
+| AP_MAX      | 0x17                 | Value of the <<AP-field>> giving maximum permissions
+| AP_ENC      | part_rv64            | Encoding scheme for the <<AP-field>> - compressed, 6 bits
 | REP_RANGE   | rc1                  | Whether out-of-bounds addresses are representable
 |==============================================================================
 
@@ -72,44 +74,84 @@ endif::[]
 [#AP-field-encoding64, reftext="AP field encoding"]
 ==== Architectural Permissions (AP) Encoding
 
-The permissions field is {cap_rv64_perms_width} bits wide and is encoded using one bit per architectural permission as shown in xref:cap_perms_encoding64[xrefstyle=short].
-Some bit patterns are _reserved_ because they encode illegal combinations of permissions (see xref:sec_permission_transitions[xrefstyle=short]).
+The permissions field is {cap_rv64_perms_width} bits wide and uses a compressed encoding to represent all valid combinations of permissions.
+The base permissions (C, W, R, X, ASR and LM) have only 27 valid combinations: 9 valid combinations of C, W, R and LM for each of the three valid combinations of X and ASR.
 
-.Encoding of architectural permissions for {rv64y_uni_base_name}
-[#cap_perms_encoding64,align="center",options=header,cols="^10%,90%",width="75%"]
-|==============================================================================
-| Bit | Encoded permission
-| 0   | <<c_perm>>
-| 1   | <<w_perm>>
-| 2   | <<r_perm>>
-| 3   | <<x_perm>>
-| 4   | <<asr_perm>>
-| 5   | <<lm_perm>>
-| 6   | <<zylevels1_lg_perm>> (<<section_zylevels1>>)
-| 7   | <<zylevels1_sl_perm>> (<<section_zylevels1>>)
-|==============================================================================
+NOTE: The <<p_bit>> is stored separately so it is not included in the compressed encoding.
 
-NOTE: Future extensions which define new permissions must augment <<cap_perms_encoding64>>.
+NOTE: #I think this needs a better intro for how extensions add permissions#
 
-[NOTE]
-====
+Every state in octants 0 to 6, other than the <<null-cap>> state, grants all _reserved-1_ permissions allocated by future extensions (if the prerequisite permissions for that permission are granted).
+Therefore capabilities assembled by software which is unaware of an extension grant the permissions added by that extension, and this is interpreted as set by a hart which implements the extension.
+The states in octant 7 are different, and grant only the permissions which are listed for them.
+The reserved states of the encoding are available to extensions to add permissions.
 
-There are 9 bits in total allocated to the <<AP-field>> and the <<p_bit>>.
+AP_MAX is `0x17` (state `010-111`, which grants all of X, ASR, R, W, C and LM, and all _reserved-1_ permissions).
 
-* There are 18 valid combinations of C, W, R, LM, LG, and SL.
-* There are 5 valid combinations of X, ASR, and P.
-* The two groups are fully orthogonal.
+NOTE: Extensions which define new permissions must augment the tables below, see <<section_zylevels1>> for an example.
 
-Therefore, there are 90 valid combinations encoded in 9 bits.
+===== Compressed AP format
 
-Future extensions or capability-encoding formats may leverage these reserved patterns to implement a more compact joint <<AP-field>> and <<p_bit>> encoding that is fully _compatible for all software_ to increase the number of reserved bits.
+.Compressed AP format definition
+[#ap_comp64_table]
+[options=header,%autowidth]
+|===
+|Encoding[5:3]|Encoding[2:0]|X|ASR|R|W|C|LM| Comment
+9+|Octant 0
 
-// The existing encoding is not dense but is beneficial for the timing of reading capability data from data caches, as an implicit <<CLRPERM>> is required to filter loaded permissions.
-// The current encoding removes the need to unpack and repack permissions, which a more compact encoding is likely to need.
-//
-// Such an encoding would have observable differences in the in-memory representation of capabilities.
+|000          |000         | |   | | | |  | NULL permissions^1^
+|000          |001         | |   |R| | |  |
+|000          |010         | |   | |W| |  |
+|000          |011         | |   |R|W| |  |
+|000          |100         | |   |R| |C|  |
+|000          |101         | |   |R| |C|LM|
+|000          |110         | |   |R|W|C|  |
+|000          |111         | |   |R|W|C|LM|
 
-====
+9+|Octant 1
+
+|001          |000         |X|   | | | |  |
+|001          |001         |X|   |R| | |  |
+|001          |010         |X|   | |W| |  |
+|001          |011         |X|   |R|W| |  |
+|001          |100         |X|   |R| |C|  |
+|001          |101         |X|   |R| |C|LM|
+|001          |110         |X|   |R|W|C|  |
+|001          |111         |X|   |R|W|C|LM|
+
+9+|Octant 2
+
+|010          |000         |X|ASR| | | |  |
+|010          |001         |X|ASR|R| | |  |
+|010          |010         |X|ASR| |W| |  |
+|010          |011         |X|ASR|R|W| |  |
+|010          |100         |X|ASR|R| |C|  |
+|010          |101         |X|ASR|R| |C|LM|
+|010          |110         |X|ASR|R|W|C|  |
+|010          |111         |X|ASR|R|W|C|LM| Infinite capability
+
+9+|Octant 3
+
+|011          |000         | |   | |W|C|  |
+|011          |001         |X|   | |W|C|  |
+|011          |010         |X|ASR| |W|C|  |
+|011          |011         7+|_reserved_
+|011          |100-110     7+|_reserved for {cheri_levels1_ext_name}_
+|011          |111         7+|_reserved_
+
+9+|Octant 4-6
+
+|100-110      |x           7+|_reserved for {cheri_levels1_ext_name}_
+
+9+|Octant 7^1^
+
+|111          |00x, 010    7+|_reserved for {cheri_seal_ext_name}_
+|111          |011, 1x     7+|_reserved_
+
+|===
+
+^1^ The NULL encoding and octant-7 do not grant reserved-1 permissions.
+ All other allocated encodings do.
 
 [#SDP-field64, reftext="SDP field"]
 ==== Software-Defined Permissions (SDP) Encoding
