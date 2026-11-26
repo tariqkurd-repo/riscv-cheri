@@ -8,10 +8,15 @@ include::trigger-integration.adoc[]
 
 === Integrating {cheri_base_ext_name} with Sdext
 
-{cheri_base_ext_name} harts must provide a means for accessing capabilities in registers. This is achieved by supporting at least one of these features:
+{cheri_base_ext_name} harts must provide a means for accessing capabilities in GPRs. This is achieved by supporting at least one of these features:
 
 . A Program Buffer configured as specified in <<progbuf_access_ctags>>.
-. Full capability access for Access Register abstract command (`aarsize=7`) for all registers able to hold a capability.
+. Full capability access for Access Register abstract command (`aarsize=7`) for all GPRs.
+
+{cheri_base_ext_name} harts must provide a means for accessing capabilities in CSRs by supporting at least one of these features:
+
+. A Program Buffer.
+. Full capability access for Access Register abstract command (`aarsize=7`) for all CSRs able to hold a capability.
 
 {cheri_base_ext_name} harts must also provide a means for accessing capabilities in memory by supporting at least one of these features:
 
