@@ -8,6 +8,8 @@ include::trigger-integration.adoc[]
 
 === Integrating {cheri_base_ext_name} with Sdext
 
+{not_v1_ratification_package_experimental}
+
 [#caps_in_gprs]
 ==== Accessing Capabilities in GPRs
 
@@ -278,9 +280,9 @@ include::img/drootcreg.edn[]
 include::insns/dret.adoc[leveloffset=+1]
 
 [#section_hybrid_debug_integration]
-=== Integrating {cheri_default_ext_name} with Sdext
+==== Integrating {cheri_default_ext_name} with Sdext
 
-=== Interaction with drootcsel
+===== Interaction with drootcsel
 
 The Root Executable capability exposed when <<drootcsel>> is `0` is further specified as follows:
 
@@ -294,7 +296,7 @@ The Root Executable capability exposed when <<drootcsel>> is `0` is further spec
 
 The `P-bit` of this capability is _only_ updated by executing `{MODESW_CAP}` or `{MODESW_INT}` from the program buffer.
 
-=== Interaction with CSRs
+===== Interaction with CSRs
 
 A new debug default data capability (<<dddc>>) CSR is added.
 
@@ -344,7 +346,7 @@ A debugger may write <<dddc>> to change the hart's context.
 As shown in xref:CSR_exevectors_d[xrefstyle=short], <<dddc>> is a data pointer,
 so it does not need to be able to hold all possible invalid addresses.
 
-=== Debug Mode YLEN-bit CSR Summary
+==== Debug Mode YLEN-bit CSR Summary
 
 The tables below show all debug mode CSRs added or modified by {cheri_base_ext_name} or its extensions.
 
