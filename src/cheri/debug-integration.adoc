@@ -8,25 +8,37 @@ include::trigger-integration.adoc[]
 
 === Integrating {cheri_base_ext_name} with Sdext
 
-{cheri_base_ext_name} harts must provide a means for accessing capabilities in GPRs. This is achieved by supporting at least one of these features:
+[#caps_in_gprs]
+==== Accessing Capabilities in GPRs
 
-. A Program Buffer configured to be able access {ctag}s.
-. Full capability access for Access Register abstract command (`aarsize=7`) for all GPRs.
+{cheri_base_ext_name} harts must provide a means for accessing capabilities in GPRs.
+This is achieved by supporting at least one of these features:
 
-{cheri_base_ext_name} harts must provide a means for accessing capabilities in CSRs by supporting at least one of these features:
-
-. A Program Buffer configured to be able to acccess {ctag}s.
-. Full capability access for Access Register abstract command (`aarsize=7`) for all CSRs able to hold a capability.
-
-{cheri_base_ext_name} harts must also provide a means for accessing capabilities in memory by supporting at least one of these features:
-
-. A Program Buffer configured configured to be able to acccess {ctag}s.
+. A Program Buffer configured to be able to access {ctag}s.
+. Full capability access for Access Register abstract commands (`aarsize=7`) for all GPRs, as defined in <<rvy_abstract_commands>>.
 
 <<progbuf_access_ctags>> gives a suitable configuration for the Program Buffer.
-Future versions of this document may include more such configurations.
 
-. Full capability access for Access Memory abstract command (`aamsize=7`).
+NOTE: Future versions of this document may include more suitable Program Buffer configurations.
 
+==== Accessing Capabilities in CSRs
+
+{cheri_base_ext_name} harts must also provide a means for accessing capabilities in CSRs.
+
+If the abstract CSR command is supported, then the requirement is satisfied by both options in <<caps_in_gprs>>.
+
+If not, then a capability CSR value can be copied into a GPR, and then transferred directly if `aarsize=7` is supported.
+In this configuration only a minimum sized Program Buffer is required to copy the CSR value.
+
+==== Accessing Capabilities in Memory
+
+If the requirements from <<caps_in_gprs>> are met, then a capability in memory can be transferred to GPR providing a minimum sized Program Buffer is implemented.
+
+Otherwise, the hart may access capabilities directly in memory if it supports:
+
+. Full capability access for Access Memory abstract commands (`aamsize=7`), as defined in <<rvy_abstract_commands>>.
+
+[#rvy_abstract_commands]
 ==== Abstract Commands
 
 Abstract commands are optionally extended to access full capabilities.
