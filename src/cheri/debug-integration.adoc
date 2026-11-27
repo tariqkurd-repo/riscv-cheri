@@ -8,16 +8,15 @@ include::trigger-integration.adoc[]
 
 === Integrating {cheri_base_ext_name} with Sdext
 
-{not_v1_ratification_package_experimental}
+{not_v1_ratification_package_stable}
 
 [#caps_in_gprs]
 ==== Accessing Capabilities in GPRs
-
 {cheri_base_ext_name} harts must provide a means for accessing capabilities in GPRs.
 This is achieved by supporting at least one of these features:
 
-. A Program Buffer configured to be able to access {ctag}s.
 . Full capability access for Access Register abstract commands (`aarsize=7`) for all GPRs, as defined in <<rvy_abstract_commands>>.
+. A Program Buffer configured to be able to access {ctag}s.
 
 <<progbuf_access_ctags>> gives a suitable configuration for the Program Buffer.
 
@@ -25,20 +24,37 @@ NOTE: Future versions of this document may include more suitable Program Buffer 
 
 ==== Accessing Capabilities in CSRs
 
-{cheri_base_ext_name} harts must also provide a means for accessing capabilities in CSRs.
+{cheri_base_ext_name} harts must provide a means for accessing capabilities in CSRs by supporting at least one of these features:
 
-If the abstract CSR command is supported, then the requirement is satisfied by both options in <<caps_in_gprs>>.
+. Full capability access for Access Register abstract command (`aarsize=7`) for all CSRs able to hold a capability.
+. A Program Buffer (of any size).
 
-If not, then a capability CSR value can be copied into a GPR, and then transferred directly if `aarsize=7` is supported.
-In this configuration only a minimum sized Program Buffer is required to copy the CSR value.
+[NOTE]
+====
+If direct abstract access to capabilities in CSRs (`aarsize=7`) is not supported, the debugger can combine the Program Buffer and GPR access (from <<caps_in_gprs>>) to read or write capabilities in CSRs indirectly.
+====
+
+[NOTE]
+====
+If the `aarsize=7` is supported for Access Register abstract commands on GPRs, then even a minimum sized Program Buffer is sufficient to enable the debugger to access capabilities in CSRs.
+====
 
 ==== Accessing Capabilities in Memory
 
-If the requirements from <<caps_in_gprs>> are met, then a capability in memory can be transferred to GPR providing a minimum sized Program Buffer is implemented.
+{cheri_base_ext_name} harts must also provide a means for accessing capabilities in memory by supporting at least one of these features:
 
-Otherwise, the hart may access capabilities directly in memory if it supports:
+. Full capability access for Access Memory abstract command (`aamsize=7`).
+. A Program Buffer (of any size).
 
-. Full capability access for Access Memory abstract commands (`aamsize=7`), as defined in <<rvy_abstract_commands>>.
+[NOTE]
+====
+If direct abstract access to capabilities memory (`aamsize=7`) is not supported, the debugger can combine the Program Buffer and GPR access (from <<caps_in_gprs>>) to read or write capabilities in memory indirectly.
+====
+
+[NOTE]
+====
+If the `aarsize=7` is supported for Access Register abstract commands on GPRs, then even a minimum sized Program Buffer is sufficient to enable the debugger to access capabilities in the memory.
+====
 
 [#rvy_abstract_commands]
 ==== Abstract Commands
