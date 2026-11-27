@@ -339,7 +339,7 @@ and the requirement to support them in debug mode is also new.
 endif::[]
 
 [#dddc,reftext="dddc"]
-==== Debug Default Data Capability CSR (dddc)
+===== Debug Default Data Capability CSR (dddc)
 
 <<dddc>> is a debug mode accessible YLEN-bit CSR.
 
